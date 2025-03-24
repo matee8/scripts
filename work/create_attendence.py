@@ -42,11 +42,12 @@ def read_token() -> str:
     return token
 
 
-def send_request(token: str,
-                 start: str,
-                 end: str,
-                 url: str = URL,
-                 params: dict[str, typing.Any] = PARAMS) -> None:
+def send_request(
+        token: str,
+        start: str,
+        end: str,
+        url: str = URL,
+        params: dict[str, typing.Any] = PARAMS) -> dict[str, dict[str, int]]:
     cj = cookiejar.CookieJar()
 
     parsed_url = parse.urlparse(url)
@@ -98,11 +99,21 @@ def send_request(token: str,
         parsed_url.fragment,
     ))
 
+    res = {}
+
     with opener.open(new_url) as response:
         content = response.read().decode("utf-8", errors="replace")
         parsed_data = json.loads(content)
         for elem in parsed_data:
-            print(elem["Tantargy"])
+            if elem["color"] == "#60BF55":
+                lesson = elem["title"].split("\n")[0]
+                date = datetime.datetime.fromisoformat(
+                    elem["datum"]).strftime("%Y. %m. %d")
+                daily_lessons = res.get(date, {})
+                daily_lessons[lesson] = daily_lessons.get(lesson, 0) + 1
+                res[date] = daily_lessons
+
+    return res
 
 
 def main():
