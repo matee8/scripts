@@ -120,7 +120,7 @@ def send_request(
 
 def print_to_csv(lessons: dict[str, dict[str, int]],
                  filename: str = FILENAME) -> None:
-    with open(filename, "w", newline="") as file:
+    with open(filename, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         for day, daily_lessons in lessons.items():
             for title, count in daily_lessons.items():
@@ -154,12 +154,28 @@ def main():
 
         print_to_csv(lessons)
         print(f"Attendence written to {FILENAME}.")
+    except UnicodeEncodeError as err:
+        print(f"Terminal write error: {err}")
+    except EOFError as err:
+        print(f"No user input given: {err}")
     except KeyboardInterrupt:
         print("\nKeyboard interrupt received. Exiting.")
     except error.URLError as err:
         print(f"Network error: {err}")
+    except json.JSONDecodeError as err:
+        print(f"Failed to decode payload: {err}")
     except ValueError as err:
         print(f"Input error: {err}")
+    except KeyError as err:
+        print(f"Invalid payload: {err}")
+    except PermissionError as err:
+        print(f"Permissions lacking: {err}")
+    except IndexError as err:
+        print(f"Invalid data: {err}")
+    except csv.Error as err:
+        print(f"CSV formatting failed: {err}")
+    except SystemExit:
+        print("Exiting.")
     except Exception as err:
         print(f"Unexpected error: {str(err)}")
 
