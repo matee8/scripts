@@ -190,14 +190,8 @@ def main():
         print(f"Invalid payload: {err}")
     except PermissionError as err:
         print(f"Permissions lacking: {err}")
-    except IndexError as err:
-        print(f"Invalid data: {err}")
     except csv.Error as err:
         print(f"CSV formatting failed: {err}")
-    except SystemExit:
-        print("Exiting.")
-    except Exception as err:
-        print(f"Unexpected error: {str(err)}")
 
 
 if __name__ == "__main__":
