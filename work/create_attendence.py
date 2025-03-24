@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import csv
 import datetime
 from http import cookiejar
 import json
@@ -22,6 +23,7 @@ PARAMS = {
     "szuresTanevRendjeAlapjan": False,
     "kellOraTemaTooltip": True,
 }
+FILENAME = "output.csv"
 
 
 def show_guide():
@@ -116,6 +118,18 @@ def send_request(
     return res
 
 
+def print_to_csv(lessons: dict[str, dict[str, int]],
+                 filename: str = FILENAME) -> None:
+    with open(filename, "w", newline="") as file:
+        writer = csv.writer(file)
+        for day, daily_lessons in lessons.items():
+            for title, count in daily_lessons.items():
+                split_title = title.split("-")
+                name = split_title[0].strip()
+                group = split_title[1].strip()
+                writer.writerow([day, name, count, group])
+
+
 def main():
     try:
         if len(sys.argv) != 3:
@@ -138,7 +152,8 @@ def main():
         lessons = send_request(token, start_date.strftime("%Y-%m-%d"),
                                end_date.strftime("%Y-%m-%d"))
 
-        print(lessons)
+        print_to_csv(lessons)
+        print(f"Attendence written to {FILENAME}.")
     except KeyboardInterrupt:
         print("\nKeyboard interrupt received. Exiting.")
     except error.URLError as err:
