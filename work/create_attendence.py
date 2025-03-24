@@ -132,6 +132,7 @@ def print_to_csv(lessons: dict[str, dict[str, int]],
                  filename: str = FILENAME) -> None:
     with open(filename, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
+        writer.writerow(["date", "lesson name", "daily count", "class"])
         for day, daily_lessons in lessons.items():
             for title, count in daily_lessons.items():
                 split_title = title.split("-")
