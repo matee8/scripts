@@ -8,7 +8,7 @@ import sys
 import typing
 from urllib import error, parse, request
 
-URL = "https://vszc-petofi.e-kreta.hu/api" \
+BASE_URL = "https://vszc-petofi.e-kreta.hu/api" \
     "/CalendarApi/GetTanariOrarendOrarendiorakEsTanorak"
 PARAMS = {
     "osztalyCsoportId": -1,
@@ -52,15 +52,14 @@ def read_token() -> tuple[str, str]:
     return (token, teacher_id)
 
 
-def send_request(
+def create_request(
         token: str,
         teacher_id: str,
-        start: str,
-        end: str,
-        url: str = URL,
-        params: dict[str, typing.Any] = PARAMS) -> dict[str, dict[str, int]]:
-    cj = cookiejar.CookieJar()
-
+        start: datetime.datetime,
+        end: datetime.datetime,
+        url: str = BASE_URL,
+        params: dict[str,
+                     typing.Any] = PARAMS) -> tuple[str, cookiejar.CookieJar]:
     parsed_url = parse.urlparse(url)
 
     if not parsed_url.scheme:
@@ -92,12 +91,12 @@ def send_request(
         rfc2109=False,
     )
 
-    cj.set_cookie(cookie)
+    cookies = cookiejar.CookieJar()
 
-    opener = request.build_opener(request.HTTPCookieProcessor(cj))
+    cookies.set_cookie(cookie)
 
-    params["start"] = start
-    params["end"] = end
+    params["start"] = start.strftime("%Y-%m-%d")
+    params["end"] = end.strftime("%Y-%m-%d")
     params["tanarId"] = teacher_id
 
     encoded_params = parse.urlencode(params)
@@ -111,9 +110,16 @@ def send_request(
         parsed_url.fragment,
     ))
 
+    return (new_url, cookies)
+
+
+def send_request(cookies: cookiejar.CookieJar,
+                 url: str) -> dict[str, dict[str, int]]:
+    opener = request.build_opener(request.HTTPCookieProcessor(cookies))
+
     res = {}
 
-    with opener.open(new_url) as response:
+    with opener.open(url) as response:
         content = response.read().decode("utf-8", errors="replace")
         parsed_data = json.loads(content)
         for elem in parsed_data:
@@ -159,9 +165,9 @@ def main():
         else:
             end_date = datetime.datetime(year, month + 1, 1)
 
-        lessons = send_request(token, teacher_id,
-                               start_date.strftime("%Y-%m-%d"),
-                               end_date.strftime("%Y-%m-%d"))
+        url, cookies = create_request(token, teacher_id, start_date, end_date)
+
+        lessons = send_request(cookies, url)
 
         print_to_csv(lessons)
         print(f"Attendence written to {FILENAME}.")
