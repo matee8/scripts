@@ -11,7 +11,6 @@ from urllib import error, parse, request
 URL = "https://vszc-petofi.e-kreta.hu/api" \
     "/CalendarApi/GetTanariOrarendOrarendiorakEsTanorak"
 PARAMS = {
-    "tanarId": 700936,
     "osztalyCsoportId": -1,
     "tanuloId": -1,
     "teremId": -1,
@@ -26,26 +25,36 @@ PARAMS = {
 FILENAME = "output.csv"
 
 
-def show_guide():
+def read_token() -> tuple[str, str]:
     print("1. Log in to 'Kréta'.")
     print("2. Press 'Ctrl+Shift+I'.")
-    print("3. Go to the 'Storage'/'Application' tab.")
-    print("4. In the left sidebar, expand 'Cookies'.")
-    print("5. Find the 'Kréta' domain (https://*.e-kreta.hu).")
-    print("6. Look for the cookie named 'kreta.application'.")
-    print("7. Copy the 'Value' field of this cookie.")
+    print("3. Go to the 'Haladási Napló'")
+    print("4. Go to the 'Storage'/'Application' tab.")
+    print("5. In the left sidebar, expand 'Cookies'.")
+    print("6. Find the 'Kréta' domain (https://*.e-kreta.hu).")
+    print("7. Look for the cookie named 'kreta.application'.")
+    print("8. Copy the 'Value' field of this cookie.")
 
-
-def read_token() -> str:
-    token = input("Enter the token: ").strip()
+    token = input("Enter the copied value: ").strip()
     if not token:
         raise ValueError("Token cannot be empty")
 
-    return token
+    print("9. Go to the 'Debugger' tab.")
+    print("10. In the left sidebar, expand 'Orarend'.")
+    print("11. Click on 'TanariOrarend'.")
+    print("12. Press 'Ctrl+F' and search for 'tanarId: setCalendarTanarId'")
+    print("13. Copy the parameter of the function.")
+
+    teacher_id = input("Enter the copied value: ").strip()
+    if not teacher_id:
+        raise ValueError("Teacher ID cannot be empty.")
+
+    return (token, teacher_id)
 
 
 def send_request(
         token: str,
+        teacher_id: str,
         start: str,
         end: str,
         url: str = URL,
@@ -89,6 +98,7 @@ def send_request(
 
     params["start"] = start
     params["end"] = end
+    params["tanarId"] = teacher_id
 
     encoded_params = parse.urlencode(params)
 
@@ -139,8 +149,7 @@ def main():
         year = int(sys.argv[1])
         month = int(sys.argv[2])
 
-        show_guide()
-        token = read_token()
+        token, teacher_id = read_token()
 
         start_date = datetime.datetime(year, month, 1)
 
@@ -149,7 +158,8 @@ def main():
         else:
             end_date = datetime.datetime(year, month + 1, 1)
 
-        lessons = send_request(token, start_date.strftime("%Y-%m-%d"),
+        lessons = send_request(token, teacher_id,
+                               start_date.strftime("%Y-%m-%d"),
                                end_date.strftime("%Y-%m-%d"))
 
         print_to_csv(lessons)
