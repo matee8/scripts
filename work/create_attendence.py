@@ -142,6 +142,9 @@ def print_to_csv(lessons: dict[str, dict[str, int]],
         for day, daily_lessons in lessons.items():
             for title, count in daily_lessons.items():
                 split_title = title.split("-")
+                if len(split_title) < 2:
+                    raise ValueError(
+                        "Title must contain at least one '-' character")
                 name = split_title[0].strip()
                 group = split_title[1].strip()
                 writer.writerow([day, name, count, group])
