@@ -105,39 +105,6 @@ def send_request(token: str,
             print(elem["Tantargy"])
 
 
-def get_weeks_in_month(
-        year: int,
-        month: int) -> list[tuple[datetime.datetime, datetime.datetime]]:
-    start_date = datetime.datetime(year, month, 1)
-
-    if month == 12:
-        next_month = 1
-        next_year = year + 1
-    else:
-        next_month = month + 1
-        next_year = year
-
-    end_date = datetime.datetime(next_year, next_month,
-                                 1) - datetime.timedelta(days=1)
-
-    current_weekday = start_date.weekday()
-    days_until_monday = (7 - current_weekday) % 7
-    first_monday = start_date + datetime.timedelta(days=days_until_monday)
-
-    weeks = []
-    week_start = first_monday
-    while week_start <= end_date:
-        week_end = week_start + datetime.timedelta(days=5)
-
-        if week_end > end_date:
-            week_end = end_date
-
-        weeks.append((week_start, week_end))
-        week_start += datetime.timedelta(days=7)
-
-    return weeks
-
-
 def main():
     try:
         if len(sys.argv) != 3:
@@ -146,14 +113,21 @@ def main():
 
         year = int(sys.argv[1])
         month = int(sys.argv[2])
-        weeks_in_month = get_weeks_in_month(year, month)
 
         show_guide()
         token = read_token()
 
-        for start, end in weeks_in_month:
-            send_request(token, start.strftime("%Y-%m-%d"),
-                         end.strftime("%Y-%m-%d"))
+        start_date = datetime.datetime(year, month, 1)
+
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1)
+
+        lessons = send_request(token, start_date.strftime("%Y-%m-%d"),
+                               end_date.strftime("%Y-%m-%d"))
+
+        print(lessons)
     except KeyboardInterrupt:
         print("\nKeyboard interrupt received. Exiting.")
     except error.URLError as err:
