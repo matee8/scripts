@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import datetime
 from http import cookiejar
 import json
+import sys
 import typing
 from urllib import error, parse, request
 
@@ -103,11 +105,57 @@ def send_request(token: str,
             print(elem["Tantargy"])
 
 
+def get_weeks_in_month(
+        year: int,
+        month: int) -> list[tuple[datetime.datetime, datetime.datetime]]:
+    start_date = datetime.datetime(year, month, 1)
+
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
+
+    end_date = datetime.datetime(next_year, next_month,
+                                 1) - datetime.timedelta(days=1)
+
+    current_weekday = start_date.weekday()
+    days_until_monday = (7 - current_weekday) % 7
+    first_monday = start_date + datetime.timedelta(days=days_until_monday)
+
+    weeks = []
+    week_start = first_monday
+    while week_start <= end_date:
+        week_end = week_start + datetime.timedelta(days=5)
+
+        if week_end > end_date:
+            week_end = end_date
+
+        weeks.append((week_start, week_end))
+        week_start += datetime.timedelta(days=7)
+
+    return weeks
+
+
 def main():
     try:
+        if len(sys.argv) != 3:
+            raise ValueError(
+                "Usage: python3 create_attendence.py <YEAR> <MONTH>")
+
+        year = int(sys.argv[1])
+        month = int(sys.argv[2])
+        weeks_in_month = get_weeks_in_month(year, month)
+
         show_guide()
         token = read_token()
-        send_request(token, "2025-03-24", "2025-03-29")
+
+        for start, end in weeks_in_month:
+            send_request(token, start.strftime("%Y-%m-%d"),
+                         end.strftime("%Y-%m-%d"))
+    except KeyboardInterrupt:
+        print("\nKeyboard interrupt received. Exiting.")
     except error.URLError as err:
         print(f"Network error: {err}")
     except ValueError as err:
