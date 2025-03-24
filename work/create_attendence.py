@@ -1,4 +1,39 @@
 #!/usr/bin/env python3
+"""
+create_attendence.py
+=====================
+
+This module provides a script to fetch and process attendance data for a
+teacher's schedule from the Kreta educational platform. It generates a CSV file
+summarizing the number of lessons per day and class group.
+
+**Purpose**:
+-   Fetches schedule data via the Kreta API using a user-provided authentication
+    token and teacher ID.
+-   Processes the data to count lessons per day and class.
+-   Outputs the results to a CSV file named 'output.csv'.
+
+**Usage**:
+Run the script with command-line arguments specifying the year and month (e.g.,
+`python3 create_attendence.py 2024 9`).
+
+
+**Required Inputs**:
+1.  **Authentication Token**: Retrieved from the browser's storage (Kreta
+    domain cookie).
+2.  **Teacher ID**: Extracted from the browser's debugging tools.
+
+**Output**:
+A CSV file with columns: Date, Class Name, Lesson Count, Group Name.
+
+**Dependencies**:
+-   Python 3.6+ with `urllib`, `datetime`, `csv`, and `json` modules.
+-   User must have access to the Kreta platform and follow instructions to
+    obtain the token and teacher ID.
+
+**Author**: matee8
+**Date**: March 25, 2025
+"""
 
 import csv
 import datetime
@@ -25,7 +60,7 @@ PARAMS = {
 FILENAME = "output.csv"
 
 
-def read_token() -> tuple[str, str]:
+def read_token_and_teacher_id() -> tuple[str, str]:
     print("1. Log in to 'Kréta'.")
     print("2. Press 'Ctrl+Shift+I'.")
     print("3. Go to the 'Haladási Napló'")
@@ -159,7 +194,7 @@ def main():
         year = int(sys.argv[1])
         month = int(sys.argv[2])
 
-        token, teacher_id = read_token()
+        token, teacher_id = read_token_and_teacher_id()
 
         start_date = datetime.datetime(year, month, 1)
 
