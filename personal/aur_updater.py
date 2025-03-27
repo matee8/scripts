@@ -31,6 +31,19 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
+    try:
+        list(base_dir.iterdir())
+    except PermissionError:
+        print(f"Error: Permission denied to read directory: {base_dir}",
+              file=sys.stderr)
+        sys.exit(1)
+    except OSError as e:
+        print(f"Error: Error accessing directory {base_dir}: {e}",
+              file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Checking for repositiories under: {base_dir.resolve()}")
+
     for item in os.listdir(base_dir):
         item_path = os.path.join(base_dir, item)
         if os.path.isdir(item_path):
