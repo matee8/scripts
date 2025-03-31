@@ -38,7 +38,7 @@ counts per day/class.
 **Usage**:
 
 ```bash
-python3 ./work/create_attendance.py --year <YEAR> --month <MONTH>
+python3 ./work/create_attendance.py --year <YEAR> --month <MONTH> --output <OUTPUT_FILE>
 ```
 
 **Requires**: `python`, `Kreta access`
