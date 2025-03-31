@@ -65,7 +65,7 @@ and install the package using `makepkg -sirc`.
 **Usage**:
 
 ```bash
-python3 ./personal/aur_updater.py --base-directory ~/.cache/aur
+python3 ./personal/aur_updater.py ~/.cache/aur
 ```
 
 **Requires**: `python`, `git`, `makepkg`

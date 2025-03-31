@@ -50,7 +50,7 @@ def _main():
         "(e.g., AUR packages)",
     )
     parser.add_argument(
-        "--base-directory",
+        "base_directory",
         type=Path,
         help="The base directory containing the Git repositiories to check.",
     )
