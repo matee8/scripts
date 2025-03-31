@@ -1,39 +1,4 @@
 #!/usr/bin/env python3
-"""
-create_attendence.py
-=====================
-
-This module provides a script to fetch and process attendance data for a
-teacher's schedule from the Kreta educational platform. It generates a CSV file
-summarizing the number of lessons per day and class group.
-
-**Purpose**:
--   Fetches schedule data via the Kreta API using a user-provided authentication
-    token and teacher ID.
--   Processes the data to count lessons per day and class.
--   Outputs the results to a CSV file named 'output.csv'.
-
-**Usage**:
-Run the script with command-line arguments specifying the year and month (e.g.,
-`python3 create_attendence.py 2024 9`).
-
-
-**Required Inputs**:
-1.  **Authentication Token**: Retrieved from the browser's storage (Kreta
-    domain cookie).
-2.  **Teacher ID**: Extracted from the browser's debugging tools.
-
-**Output**:
-A CSV file with columns: Date, Class Name, Lesson Count, Group Name.
-
-**Dependencies**:
--   Python 3.6+ with `urllib`, `datetime`, `csv`, and `json` modules.
--   User must have access to the Kreta platform and follow instructions to
-    obtain the token and teacher ID.
-
-**Author**: matee8
-**Date**: March 25, 2025
-"""
 
 import csv
 from datetime import datetime
@@ -63,20 +28,6 @@ FILENAME: str = "output.csv"
 
 
 def read_token_and_teacher_id() -> tuple[str, str]:
-    """
-    Prompts the user to extract authentication token and teacher ID from the
-    browser.
-
-    Instructions guide the user through retrieving the 'kreta.application'
-    cookie and teacher ID from browser developer tools. Validates inputs to
-    ensure neither token nor teacher ID are empty.
-
-    Returns:
-        tuple[str, str]: A tuple containing the token and teacher ID.
-
-    Raises:
-        ValueError: If either the token or teacher ID is empty.
-    """
     print("1. Log in to 'Kréta'.")
     print("2. Press 'Ctrl+Shift+I'.")
     print("3. Go to the 'Haladási Napló'")
@@ -110,23 +61,6 @@ def create_request(
         end: datetime,
         url: str = BASE_URL,
         params: dict[str, Any] = PARAMS) -> tuple[str, CookieJar]:
-    """
-    Constructs the API request URL with parameters and authentication cookies.
-
-    Args:
-        token (str): Authentication token from 'kreta.application' cookie.
-        teacher_id (str): Identifier for the teacher.
-        start (datetime.datetime): Start date of the schedule period.
-        end (datetime.datetime): End date of the schedule period.
-        url (str, optional): Base API endpoint URL. Defaults to BASE_URL.
-        params (dict, optional): API parameters. Defaults to PARAMS.
-
-    Returns:
-        tuple[str, CookieJar]: The URL and cookie jar for authentication.
-
-    Raises:
-        ValueError: If the URL lacks a scheme (e.g., 'http') or domain.
-    """
     parsed_url: ParseResult = parse.urlparse(url)
 
     if not parsed_url.scheme:
@@ -181,20 +115,6 @@ def create_request(
 
 
 def send_request(cookies: CookieJar, url: str) -> dict[str, dict[str, int]]:
-    """
-    Sends the HTTP request to the Kreta API and processes the response.
-
-    Args:
-        cookies (CookieJar): Authentication cookies for the request.
-        url (str): The fully constructed API endpoint URL.
-
-    Returns:
-        dict: Aggregated lesson data in the format {date: {lesson: count}}.
-
-    Raises:
-        URLError: If the network request fails.
-        JSONDecodeError: If the API response is not valid JSON.
-    """
     opener: OpenerDirector = request.build_opener(HTTPCookieProcessor(cookies))
 
     res: dict[str, dict[str, int]] = {}
@@ -216,17 +136,6 @@ def send_request(cookies: CookieJar, url: str) -> dict[str, dict[str, int]]:
 
 def print_to_csv(lessons: dict[str, dict[str, int]],
                  filename: str = FILENAME) -> None:
-    """
-    Writes aggregated lesson data to a CSV file.
-
-    Args:
-        lessons (dict): Processed data in the format {date: {lesson: count}}.
-        filename (str, optional): Output CSV filename. Defaults to 'output.csv'.
-
-    Raises:
-        ValueError: If lesson titles lack the required '-' separator.
-        CSVError: If CSV formatting fails (e.g., file permissions).
-    """
     with open(filename, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["date", "lesson name", "daily count", "class"])
@@ -242,22 +151,6 @@ def print_to_csv(lessons: dict[str, dict[str, int]],
 
 
 def main():
-    """
-    Entry point for the script. Handles command-line arguments and coordinates
-    data fetching, processing, and output.
-
-    Usage:
-        python create_attendence.py <YEAR> <MONTH>
-
-    Args:
-        sys.argv[1] (int): Year for the schedule period (e.g., 2024).
-        sys.argv[2] (int): Month for the schedule period (1-12).
-
-    Raises:
-        ValueError: For invalid input formats or missing arguments.
-        KeyboardInterrupt: If the user cancels execution.
-        (Other exceptions are handled with descriptive error messages.)
-    """
     try:
         if len(sys.argv) != 3:
             raise ValueError(
