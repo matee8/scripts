@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from argparse import ArgumentParser, Namespace
 import csv
 from datetime import datetime
 from http.cookiejar import CookieJar, Cookie
@@ -152,23 +153,36 @@ def print_to_csv(lessons: dict[str, dict[str, int]],
 
 def main():
     try:
-        if len(sys.argv) != 3:
-            raise ValueError(
-                "Usage: python3 create_attendence.py <YEAR> <MONTH>")
+        parser = ArgumentParser(
+            description="Retrieves a teacher's schedule from Kreta"
+        )
 
-        year = int(sys.argv[1])
-        month = int(sys.argv[2])
+        parser.add_argument(
+            "--year",
+            type=int,
+            required=True,
+            help="The year of the report",
+        )
+
+        parser.add_argument(
+            "--month",
+            type=int,
+            required=True,
+            help="The month of the report",
+        )
+
+        args: Namespace = parser.parse_args()
 
         token: str
         teacher_id: str
         token, teacher_id = read_token_and_teacher_id()
 
-        start_date = datetime(year, month, 1)
+        start_date = datetime(args.year, args.month, 1)
 
-        if month == 12:
-            end_date = datetime(year + 1, 1, 1)
+        if args.month == 12:
+            end_date = datetime(args.year + 1, 1, 1)
         else:
-            end_date = datetime(year, month + 1, 1)
+            end_date = datetime(args.year, args.month + 1, 1)
 
         url: str
         cookies: CookieJar
