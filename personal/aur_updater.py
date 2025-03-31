@@ -1,51 +1,50 @@
 #!/usr/bin/python3
 
-import argparse
+from argparse import ArgumentParser, Namespace
 import os
-import pathlib
+from pathlib import Path
 import subprocess
 import sys
 
 
-def main():
-    parser = argparse.ArgumentParser(
+def _main():
+    parser = ArgumentParser(
         description=
         "Check for updates in Git repositiories within a base directory." \
         "(e.g., AUR packages)",
     )
     parser.add_argument(
         "base_directory",
-        type=pathlib.Path,
+        type=Path,
         help="The base directory containing the Git repositiories to check.",
     )
 
-    args: argparse.Namespace = parser.parse_args()
-    base_dir: pathlib.Path = args.base_directory
+    args: Namespace = parser.parse_args()
 
-    if not base_dir.exists():
-        print(f"Error: Base directory not found: {base_dir}", file=sys.stderr)
+    if not args.base_directory.exists():
+        print(f"Error: Base directory not found: {args.base_directory}", file=sys.stderr)
         sys.exit(1)
 
-    if not base_dir.is_dir():
-        print(f"Error: Provided path is not a directory: {base_dir}",
+    if not args.base_directory.is_dir():
+        print(f"Error: Provided path is not a directory: {args.base_directory}",
               file=sys.stderr)
         sys.exit(1)
 
     try:
-        list(base_dir.iterdir())
+        list(args.base_directory.iterdir())
     except PermissionError:
-        print(f"Error: Permission denied to read directory: {base_dir}",
+        print(f"Error: Permission denied to read directory: {args.base_directory}",
               file=sys.stderr)
         sys.exit(1)
     except OSError as e:
-        print(f"Error: Error accessing directory {base_dir}: {e}",
+        print(f"Error: Error accessing directory {args.base_directory}: {e}",
               file=sys.stderr)
         sys.exit(1)
 
-    print(f"Checking for repositiories under: {base_dir.resolve()}")
+    print(f"Checking for repositiories under: {args.base_directory.resolve()}")
 
-    for item in os.listdir(base_dir):
-        item_path = os.path.join(base_dir, item)
+    for item in os.listdir(args.base_directory):
+        item_path = os.path.join(args.base_directory, item)
         if os.path.isdir(item_path):
             os.chdir(item_path)
             print(f"Checking for updates in: {item}")
@@ -62,4 +61,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    _main()
