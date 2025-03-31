@@ -36,16 +36,18 @@ A CSV file with columns: Date, Class Name, Lesson Count, Group Name.
 """
 
 import csv
-import datetime
-from http import cookiejar
+from datetime import datetime
+from http.cookiejar import CookieJar, Cookie
 import json
 import sys
-import typing
+from typing import Any
 from urllib import error, parse, request
+from urllib.parse import ParseResult
+from urllib.request import OpenerDirector, HTTPCookieProcessor
 
-BASE_URL = "https://vszc-petofi.e-kreta.hu/api" \
+BASE_URL: str = "https://vszc-petofi.e-kreta.hu/api" \
     "/CalendarApi/GetTanariOrarendOrarendiorakEsTanorak"
-PARAMS = {
+PARAMS: dict[str, Any] = {
     "osztalyCsoportId": -1,
     "tanuloId": -1,
     "teremId": -1,
@@ -57,7 +59,7 @@ PARAMS = {
     "szuresTanevRendjeAlapjan": False,
     "kellOraTemaTooltip": True,
 }
-FILENAME = "output.csv"
+FILENAME: str = "output.csv"
 
 
 def read_token_and_teacher_id() -> tuple[str, str]:
@@ -84,7 +86,7 @@ def read_token_and_teacher_id() -> tuple[str, str]:
     print("7. Look for the cookie named 'kreta.application'.")
     print("8. Copy the 'Value' field of this cookie.")
 
-    token = input("Enter the copied value: ").strip()
+    token: str = input("Enter the copied value: ").strip()
     if not token:
         raise ValueError("Token cannot be empty")
 
@@ -94,7 +96,7 @@ def read_token_and_teacher_id() -> tuple[str, str]:
     print("12. Press 'Ctrl+F' and search for 'tanarId: setCalendarTanarId'")
     print("13. Copy the parameter of the function.")
 
-    teacher_id = input("Enter the copied value: ").strip()
+    teacher_id: str = input("Enter the copied value: ").strip()
     if not teacher_id:
         raise ValueError("Teacher ID cannot be empty.")
 
@@ -104,11 +106,10 @@ def read_token_and_teacher_id() -> tuple[str, str]:
 def create_request(
         token: str,
         teacher_id: str,
-        start: datetime.datetime,
-        end: datetime.datetime,
+        start: datetime,
+        end: datetime,
         url: str = BASE_URL,
-        params: dict[str,
-                     typing.Any] = PARAMS) -> tuple[str, cookiejar.CookieJar]:
+        params: dict[str, Any] = PARAMS) -> tuple[str, CookieJar]:
     """
     Constructs the API request URL with parameters and authentication cookies.
 
@@ -126,18 +127,18 @@ def create_request(
     Raises:
         ValueError: If the URL lacks a scheme (e.g., 'http') or domain.
     """
-    parsed_url = parse.urlparse(url)
+    parsed_url: ParseResult = parse.urlparse(url)
 
     if not parsed_url.scheme:
         raise ValueError("URL must include a scheme")
 
-    domain = parsed_url.netloc
+    domain: str = parsed_url.netloc
     if not domain:
         raise ValueError("URL must include a domain")
 
-    path = parsed_url.path or "/"
+    path: str = parsed_url.path or "/"
 
-    cookie = cookiejar.Cookie(
+    cookie = Cookie(
         version=0,
         name="kreta.application",
         value=token,
@@ -157,7 +158,7 @@ def create_request(
         rfc2109=False,
     )
 
-    cookies = cookiejar.CookieJar()
+    cookies = CookieJar()
 
     cookies.set_cookie(cookie)
 
@@ -165,9 +166,9 @@ def create_request(
     params["end"] = end.strftime("%Y-%m-%d")
     params["tanarId"] = teacher_id
 
-    encoded_params = parse.urlencode(params)
+    encoded_params: str = parse.urlencode(params)
 
-    new_url = parse.urlunparse((
+    new_url: str = parse.urlunparse((
         parsed_url.scheme,
         parsed_url.netloc,
         parsed_url.path,
@@ -179,8 +180,7 @@ def create_request(
     return (new_url, cookies)
 
 
-def send_request(cookies: cookiejar.CookieJar,
-                 url: str) -> dict[str, dict[str, int]]:
+def send_request(cookies: CookieJar, url: str) -> dict[str, dict[str, int]]:
     """
     Sends the HTTP request to the Kreta API and processes the response.
 
@@ -195,19 +195,19 @@ def send_request(cookies: cookiejar.CookieJar,
         URLError: If the network request fails.
         JSONDecodeError: If the API response is not valid JSON.
     """
-    opener = request.build_opener(request.HTTPCookieProcessor(cookies))
+    opener: OpenerDirector = request.build_opener(HTTPCookieProcessor(cookies))
 
-    res = {}
+    res: dict[str, dict[str, int]] = {}
 
     with opener.open(url) as response:
         content = response.read().decode("utf-8", errors="replace")
         parsed_data = json.loads(content)
         for elem in parsed_data:
             if elem["color"] == "#60BF55":
-                lesson = elem["title"].split("\n")[0]
-                date = datetime.datetime.fromisoformat(
+                lesson: str = elem["title"].split("\n")[0]
+                date: str = datetime.fromisoformat(
                     elem["datum"]).strftime("%Y. %m. %d")
-                daily_lessons = res.get(date, {})
+                daily_lessons: dict[str, int] = res.get(date, {})
                 daily_lessons[lesson] = daily_lessons.get(lesson, 0) + 1
                 res[date] = daily_lessons
 
@@ -232,12 +232,12 @@ def print_to_csv(lessons: dict[str, dict[str, int]],
         writer.writerow(["date", "lesson name", "daily count", "class"])
         for day, daily_lessons in lessons.items():
             for title, count in daily_lessons.items():
-                split_title = title.split("-")
+                split_title: list[str] = title.split("-")
                 if len(split_title) < 2:
                     raise ValueError(
                         "Title must contain at least one '-' character")
-                name = split_title[0].strip()
-                group = split_title[1].strip()
+                name: str = split_title[0].strip()
+                group: str = split_title[1].strip()
                 writer.writerow([day, name, count, group])
 
 
@@ -266,18 +266,22 @@ def main():
         year = int(sys.argv[1])
         month = int(sys.argv[2])
 
+        token: str
+        teacher_id: str
         token, teacher_id = read_token_and_teacher_id()
 
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
 
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1)
+            end_date = datetime(year + 1, 1, 1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1)
+            end_date = datetime(year, month + 1, 1)
 
+        url: str
+        cookies: CookieJar
         url, cookies = create_request(token, teacher_id, start_date, end_date)
 
-        lessons = send_request(cookies, url)
+        lessons: dict[str, dict[str, int]] = send_request(cookies, url)
 
         print_to_csv(lessons)
         print(f"Attendence written to {FILENAME}.")
