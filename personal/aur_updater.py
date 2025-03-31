@@ -7,6 +7,42 @@ from subprocess import CompletedProcess
 import sys
 
 
+def _run_command(cmd: list[str], cwd: Path,
+                 description: str) -> CompletedProcess | None:
+    try:
+        result: CompletedProcess = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            check=False,
+            encoding="utf-8",
+            errors="replace",
+        )
+
+        if result.returncode != 0:
+            print(f"Error updating {cwd.name}", file=sys.stderr)
+
+            if result.stderr:
+                print(f"{description} error output: {result.stderr.strip()}",
+                      file=sys.stderr)
+
+            if result.stdout:
+                print(f"{description} standard output: {result.stdout.strip}",
+                      file=sys.stderr)
+
+            return None
+        return result
+    except FileNotFoundError:
+        print(f"Error: '{cmd[0]}' command not found.", file=sys.stderr)
+        sys.exit(1)
+    except OSError as e:
+        print(f"Error: Error running {description} for {cwd.name}: {e}",
+              file=sys.stderr)
+    except Exception as e:
+        print(f"Error: Unexpected error: {e}", file=sys.stderr)
+
+
 def _main():
     parser = ArgumentParser(
         description=
@@ -65,30 +101,28 @@ def _main():
                 continue
 
             try:
-                result: CompletedProcess[str] = subprocess.run(
-                    ["git", "pull"],
-                    cwd=item_path,
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                    encoding="utf-8",
-                    errors="replace",
-                )
+                git_result: CompletedProcess | None = _run_command(
+                    ["git", "pull"], item_path, "'git pull'")
 
-                if result.returncode != 0:
-                    print(f"Error updating {item_path.name}", file=sys.stderr)
-                    if result.stderr:
-                        print(f"Git error output: {result.stderr.strip()}",
-                              file=sys.stderr)
-                    if result.stdout:
-                        print(f"Git standard output: {result.stdout.strip}",
-                              file=sys.stderr)
+                if git_result is None:
                     continue
 
-                if "Already up to date." not in result.stdout:
-                    print(f"Updates pulled in {item_path.name}")
-                else:
+                if "Already up to date." in git_result.stdout:
                     print(f"No updates in {item_path.name}")
+                    continue
+
+                print(f"Updates pulled in {item_path.name}")
+                print(f"Attempting to build and install {item_path.name} " \
+                      "with 'makepkg -sirc'")
+
+                makepkg_result: CompletedProcess | None = _run_command(
+                    ["makepkg", "-sirc"], item_path, "'makepkg'")
+
+                if makepkg_result is None:
+                    continue
+
+                if makepkg_result.returncode == 0:
+                    print(f"Successfully built and installed {item_path.name}")
 
             except FileNotFoundError:
                 print("Error: 'git' command not found.", file=sys.stderr)
