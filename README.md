@@ -5,14 +5,6 @@ tasks across work, school, and personal projects.
 
 ---
 
-## Table of Contents
-
-- [Getting Started](#getting-started)
-- [Scripts Overview](#scripts-overview)
-- [License](#license)
-
----
-
 ## Getting Started
 
 1.  Clone the repository:
