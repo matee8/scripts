@@ -22,19 +22,23 @@ def _main():
     args: Namespace = parser.parse_args()
 
     if not args.base_directory.exists():
-        print(f"Error: Base directory not found: {args.base_directory}", file=sys.stderr)
+        print(f"Error: Base directory not found: {args.base_directory}",
+              file=sys.stderr)
         sys.exit(1)
 
     if not args.base_directory.is_dir():
-        print(f"Error: Provided path is not a directory: {args.base_directory}",
-              file=sys.stderr)
+        print(
+            f"Error: Provided path is not a directory: {args.base_directory}",
+            file=sys.stderr)
         sys.exit(1)
 
     try:
         list(args.base_directory.iterdir())
     except PermissionError:
-        print(f"Error: Permission denied to read directory: {args.base_directory}",
-              file=sys.stderr)
+        print(
+            "Error: Permission denied to read " \
+            "directory: {args.base_directory}",
+            file=sys.stderr)
         sys.exit(1)
     except OSError as e:
         print(f"Error: Error accessing directory {args.base_directory}: {e}",
