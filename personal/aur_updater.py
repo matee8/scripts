@@ -32,8 +32,9 @@ def _run_command(cmd: list[str],
                       file=sys.stderr)
 
             if result.stdout:
-                print(f"{description} standard output: {result.stdout.strip}",
-                      file=sys.stderr)
+                print(
+                    f"{description} standard output: {result.stdout.strip()}",
+                    file=sys.stderr)
 
             return None
         return result
