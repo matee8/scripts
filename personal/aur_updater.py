@@ -126,6 +126,16 @@ def _main():
 
         print(f"Successfully built and installed {item_path.name}.")
 
+        clean_result: typing.Optional[
+            subprocess.CompletedProcess] = _run_command(
+                ["git", "clean", "-dfx"], item_path, "'git clean -dfx'")
+
+        if clean_result is None:
+            print(f"Cleanup failed for {item_path.name}", file=sys.stderr)
+            continue
+
+        print(f"Cleaned untracked files in {item_path.name}")
+
 
 if __name__ == "__main__":
     _main()
