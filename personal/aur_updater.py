@@ -2,17 +2,15 @@
 
 import argparse
 import pathlib
-import typing
 import subprocess
 import sys
 
 
 def _run_command(
-        cmd: typing.List[str],
+        cmd: list[str],
         cwd: pathlib.Path,
         description: str,
-        interactive: bool = False
-) -> typing.Optional[subprocess.CompletedProcess]:
+        interactive: bool = False) -> subprocess.CompletedProcess | None:
     try:
         print(f"Running command: {' '.join(cmd)} in {cwd.name}. "
               f"Interactive: {interactive}.")
@@ -97,10 +95,8 @@ def _main() -> None:
             print(f"Skipping non-Git directory: {item_path.name}.")
             continue
 
-        git_result: typing.Optional[
-            subprocess.CompletedProcess] = _run_command(["git", "pull"],
-                                                        item_path,
-                                                        "'git pull'")
+        git_result: subprocess.CompletedProcess | None = _run_command(
+            ["git", "pull"], item_path, "'git pull'")
 
         if git_result is None:
             continue
@@ -113,12 +109,11 @@ def _main() -> None:
         print(f"Attempting to build and install {item_path.name} " \
                 "with 'makepkg -sirc'.")
 
-        makepkg_result: typing.Optional[
-            subprocess.CompletedProcess] = _run_command(
-                cmd=["makepkg", "-sirc"],
-                cwd=item_path,
-                description="'makepkg'",
-                interactive=True)
+        makepkg_result: subprocess.CompletedProcess | None = _run_command(
+            cmd=["makepkg", "-sirc"],
+            cwd=item_path,
+            description="'makepkg'",
+            interactive=True)
 
         if makepkg_result is None:
             print(f"Build/install failed for {item_path.name}.",
@@ -127,9 +122,8 @@ def _main() -> None:
 
         print(f"Successfully built and installed {item_path.name}.")
 
-        clean_result: typing.Optional[
-            subprocess.CompletedProcess] = _run_command(
-                ["git", "clean", "-dfx"], item_path, "'git clean -dfx'")
+        clean_result: subprocess.CompletedProcess | None = _run_command(
+            ["git", "clean", "-dfx"], item_path, "'git clean -dfx'")
 
         if clean_result is None:
             print(f"Cleanup failed for {item_path.name}", file=sys.stderr)
