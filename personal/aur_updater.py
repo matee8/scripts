@@ -7,13 +7,17 @@ from subprocess import CompletedProcess
 import sys
 
 
-def _run_command(cmd: list[str], cwd: Path,
-                 description: str) -> CompletedProcess | None:
+def _run_command(cmd: list[str],
+                 cwd: Path,
+                 description: str,
+                 interactive: bool = False) -> CompletedProcess | None:
     try:
+        print(f"Running command: {' '.join(cmd)} in {cwd.name}. "
+              f"Interactive: {interactive}")
         result: CompletedProcess = subprocess.run(
             cmd,
             cwd=cwd,
-            capture_output=True,
+            capture_output=not interactive,
             text=True,
             check=False,
             encoding="utf-8",
@@ -116,7 +120,10 @@ def _main():
                       "with 'makepkg -sirc'")
 
                 makepkg_result: CompletedProcess | None = _run_command(
-                    ["makepkg", "-sirc"], item_path, "'makepkg'")
+                    cmd=["makepkg", "-sirc"],
+                    cwd=item_path,
+                    description="'makepkg'",
+                    interactive=True)
 
                 if makepkg_result is None:
                     continue
