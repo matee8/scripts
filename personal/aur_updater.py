@@ -13,7 +13,7 @@ def _run_command(cmd: list[str],
                  interactive: bool = False) -> CompletedProcess | None:
     try:
         print(f"Running command: {' '.join(cmd)} in {cwd.name}. "
-              f"Interactive: {interactive}")
+              f"Interactive: {interactive}.")
         result: CompletedProcess = subprocess.run(
             cmd,
             cwd=cwd,
@@ -25,16 +25,18 @@ def _run_command(cmd: list[str],
         )
 
         if result.returncode != 0:
-            print(f"Error updating {cwd.name}", file=sys.stderr)
+            print(
+                f"Error: {description} for {cwd.name} failed with exit code "
+                f"{result.returncode}.",
+                file=sys.stderr)
 
             if result.stderr:
-                print(f"{description} error output: {result.stderr.strip()}",
+                print(f"Error output: {result.stderr.strip()}",
                       file=sys.stderr)
 
             if result.stdout:
-                print(
-                    f"{description} standard output: {result.stdout.strip()}",
-                    file=sys.stderr)
+                print(f"Standard output: {result.stdout.strip()}",
+                      file=sys.stderr)
 
             return None
         return result
@@ -42,17 +44,20 @@ def _run_command(cmd: list[str],
         print(f"Error: '{cmd[0]}' command not found.", file=sys.stderr)
         sys.exit(1)
     except OSError as e:
-        print(f"Error: Error running {description} for {cwd.name}: {e}",
+        print(f"Error: OS error running {description} for {cwd.name}: {e}",
               file=sys.stderr)
+        return None
     except Exception as e:
-        print(f"Error: Unexpected error: {e}", file=sys.stderr)
+        print(f"Error: Unexpected error running {description}: {e}",
+              file=sys.stderr)
+        return None
 
 
 def _main():
     parser = ArgumentParser(
         description=
         "Check for updates in Git repositiories within a base directory. " \
-        "(e.g., AUR packages)",
+        "(e.g., AUR packages) and build/install them.",
     )
     parser.add_argument(
         "base_directory",
@@ -65,21 +70,19 @@ def _main():
     base_dir: Path = args.base_directory.resolve()
 
     if not base_dir.exists():
-        print(f"Error: Base directory not found: {base_dir}", file=sys.stderr)
+        print(f"Error: Base directory not found: {base_dir}.", file=sys.stderr)
         sys.exit(1)
 
     if not base_dir.is_dir():
-        print(f"Error: Provided path is not a directory: {base_dir}",
+        print(f"Error: Provided path is not a directory: {base_dir}.",
               file=sys.stderr)
         sys.exit(1)
 
     try:
         _ = list(base_dir.iterdir())
     except PermissionError:
-        print(
-            "Error: Permission denied to read " \
-            "directory: {base_dir}",
-            file=sys.stderr)
+        print("Error: Permission denied to read directory: {base_dir}.",
+              file=sys.stderr)
         sys.exit(1)
     except OSError as e:
         print(f"Error: Error accessing directory {base_dir}: {e}",
@@ -100,12 +103,12 @@ def _main():
                     continue
 
                 if "Already up to date." in git_result.stdout:
-                    print(f"No updates in {item_path.name}")
+                    print(f"No updates in {item_path.name}.")
                     continue
 
-                print(f"Updates pulled in {item_path.name}")
+                print(f"Updates pulled in {item_path.name}.")
                 print(f"Attempting to build and install {item_path.name} " \
-                      "with 'makepkg -sirc'")
+                      "with 'makepkg -sirc'.")
 
                 makepkg_result: CompletedProcess | None = _run_command(
                     cmd=["makepkg", "-sirc"],
@@ -114,10 +117,13 @@ def _main():
                     interactive=True)
 
                 if makepkg_result is None:
+                    print(f"Build/install failed for {item_path.name}.",
+                          file=sys.stderr)
                     continue
 
                 if makepkg_result.returncode == 0:
-                    print(f"Successfully built and installed {item_path.name}")
+                    print(
+                        f"Successfully built and installed {item_path.name}.")
 
             except FileNotFoundError:
                 print("Error: 'git' command not found.", file=sys.stderr)
