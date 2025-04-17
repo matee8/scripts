@@ -62,31 +62,31 @@ def _main():
 
     args: Namespace = parser.parse_args()
 
-    if not args.base_directory.exists():
-        print(f"Error: Base directory not found: {args.base_directory}",
-              file=sys.stderr)
+    base_dir: Path = args.base_directory.resolve()
+
+    if not base_dir.exists():
+        print(f"Error: Base directory not found: {base_dir}", file=sys.stderr)
         sys.exit(1)
 
-    if not args.base_directory.is_dir():
-        print(
-            f"Error: Provided path is not a directory: {args.base_directory}",
-            file=sys.stderr)
+    if not base_dir.is_dir():
+        print(f"Error: Provided path is not a directory: {base_dir}",
+              file=sys.stderr)
         sys.exit(1)
 
     try:
-        list(args.base_directory.iterdir())
+        _ = list(base_dir.iterdir())
     except PermissionError:
         print(
             "Error: Permission denied to read " \
-            "directory: {args.base_directory}",
+            "directory: {base_dir}",
             file=sys.stderr)
         sys.exit(1)
     except OSError as e:
-        print(f"Error: Error accessing directory {args.base_directory}: {e}",
+        print(f"Error: Error accessing directory {base_dir}: {e}",
               file=sys.stderr)
         sys.exit(1)
 
-    for item_path in args.base_directory.iterdir():
+    for item_path in base_dir.iterdir():
         if item_path.is_dir():
             if not (item_path / ".git").is_dir():
                 print(f"Skipping non-Git directory: {item_path.name}")
