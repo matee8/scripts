@@ -86,19 +86,6 @@ def _main():
               file=sys.stderr)
         sys.exit(1)
 
-    try:
-        list(args.base_directory.iterdir())
-    except PermissionError:
-        print(
-            "Error: Permission denied to read " \
-            f"directory: {args.base_directory}",
-            file=sys.stderr)
-        sys.exit(1)
-    except OSError as e:
-        print(f"Error: Error accessing directory {args.base_directory}: {e}",
-              file=sys.stderr)
-        sys.exit(1)
-
     for item_path in args.base_directory.iterdir():
         if item_path.is_dir():
             if not (item_path / ".git").is_dir():
