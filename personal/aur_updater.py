@@ -124,8 +124,7 @@ def _main():
                   file=sys.stderr)
             continue
 
-        if makepkg_result.returncode == 0:
-            print(f"Successfully built and installed {item_path.name}.")
+        print(f"Successfully built and installed {item_path.name}.")
 
 
 if __name__ == "__main__":
