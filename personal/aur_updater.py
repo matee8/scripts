@@ -1,28 +1,29 @@
 #!/usr/bin/python3
 
-from argparse import ArgumentParser, Namespace
-from pathlib import Path
+import argparse
+import pathlib
+import typing
 import subprocess
-from subprocess import CompletedProcess
 import sys
 
 
-def _run_command(cmd: list[str],
-                 cwd: Path,
-                 description: str,
-                 interactive: bool = False) -> CompletedProcess | None:
+def _run_command(
+        cmd: typing.List[str],
+        cwd: pathlib.Path,
+        description: str,
+        interactive: bool = False
+) -> typing.Optional[subprocess.CompletedProcess]:
     try:
         print(f"Running command: {' '.join(cmd)} in {cwd.name}. "
               f"Interactive: {interactive}.")
-        result: CompletedProcess = subprocess.run(
+        result: subprocess.CompletedProcess = subprocess.run(
             cmd,
             cwd=cwd,
             capture_output=not interactive,
             text=True,
             check=False,
             encoding="utf-8",
-            errors="replace",
-        )
+            errors="replace")
 
         if result.returncode != 0:
             print(
@@ -54,20 +55,18 @@ def _run_command(cmd: list[str],
 
 
 def _main():
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         description=
-        "Check for updates in Git repositiories within a base directory. " \
-        "(e.g., AUR packages) and build/install them.",
-    )
+        "Check for updates in Git repositiories within a base directory. "
+        "(e.g., AUR packages) and build/install them.")
     parser.add_argument(
         "base_directory",
-        type=Path,
-        help="The base directory containing the Git repositiories to check.",
-    )
+        type=pathlib.Path,
+        help="The base directory containing the Git repositiories to check.")
 
-    args: Namespace = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
 
-    base_dir: Path = args.base_directory.resolve()
+    base_dir: pathlib.Path = args.base_directory.resolve()
 
     if not base_dir.exists():
         print(f"Error: Base directory not found: {base_dir}.", file=sys.stderr)
@@ -90,49 +89,43 @@ def _main():
         sys.exit(1)
 
     for item_path in base_dir.iterdir():
-        if item_path.is_dir():
-            if not (item_path / ".git").is_dir():
-                print(f"Skipping non-Git directory: {item_path.name}")
-                continue
+        if not item_path.is_dir():
+            continue
 
-            try:
-                git_result: CompletedProcess | None = _run_command(
-                    ["git", "pull"], item_path, "'git pull'")
+        if not (item_path / ".git").is_dir():
+            print(f"Skipping non-Git directory: {item_path.name}.")
+            continue
 
-                if git_result is None:
-                    continue
+        git_result: typing.Optional[
+            subprocess.CompletedProcess] = _run_command(["git", "pull"],
+                                                        item_path,
+                                                        "'git pull'")
 
-                if "Already up to date." in git_result.stdout:
-                    print(f"No updates in {item_path.name}.")
-                    continue
+        if git_result is None:
+            continue
 
-                print(f"Updates pulled in {item_path.name}.")
-                print(f"Attempting to build and install {item_path.name} " \
-                      "with 'makepkg -sirc'.")
+        if "Already up to date." in git_result.stdout:
+            print(f"No updates in {item_path.name}.")
+            continue
 
-                makepkg_result: CompletedProcess | None = _run_command(
-                    cmd=["makepkg", "-sirc"],
-                    cwd=item_path,
-                    description="'makepkg'",
-                    interactive=True)
+        print(f"Updates pulled in {item_path.name}.")
+        print(f"Attempting to build and install {item_path.name} " \
+                "with 'makepkg -sirc'.")
 
-                if makepkg_result is None:
-                    print(f"Build/install failed for {item_path.name}.",
-                          file=sys.stderr)
-                    continue
+        makepkg_result: typing.Optional[
+            subprocess.CompletedProcess] = _run_command(
+                cmd=["makepkg", "-sirc"],
+                cwd=item_path,
+                description="'makepkg'",
+                interactive=True)
 
-                if makepkg_result.returncode == 0:
-                    print(
-                        f"Successfully built and installed {item_path.name}.")
+        if makepkg_result is None:
+            print(f"Build/install failed for {item_path.name}.",
+                  file=sys.stderr)
+            continue
 
-            except FileNotFoundError:
-                print("Error: 'git' command not found.", file=sys.stderr)
-                sys.exit(1)
-            except OSError as e:
-                print(f"Error: Error running git for {item_path.name}: {e}",
-                      file=sys.stderr)
-            except Exception as e:
-                print(f"Error: Unexpected error: {e}", file=sys.stderr)
+        if makepkg_result.returncode == 0:
+            print(f"Successfully built and installed {item_path.name}.")
 
 
 if __name__ == "__main__":
