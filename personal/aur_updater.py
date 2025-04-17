@@ -54,11 +54,12 @@ def _run_command(
         return None
 
 
-def _main():
+def _main() -> None:
     parser = argparse.ArgumentParser(
         description=
         "Check for updates in Git repositiories within a base directory. "
         "(e.g., AUR packages) and build/install them.")
+
     parser.add_argument(
         "base_directory",
         type=pathlib.Path,
