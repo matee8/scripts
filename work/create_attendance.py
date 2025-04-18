@@ -27,7 +27,7 @@ _BASE_PARAMS: typing.Final[dict[str, typing.Any]] = {
     "kellOraTemaTooltip": True,
 }
 
-_DEFAULT_FILENAME: typing.Final[pathlib.Path] = "./output.csv"
+_DEFAULT_FILENAME: typing.Final[pathlib.Path] = pathlib.Path("./output.csv")
 
 _LESSON_COLOR_CODE: typing.Final[str] = "#60BF55"
 
